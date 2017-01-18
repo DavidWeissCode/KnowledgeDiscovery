@@ -91,7 +91,7 @@ for col in df_cont.columns.values:
             df_cont[col] = np.log(df_cont[col])
             df_cont[col] = df_cont[col].apply(lambda x: 0 if x == -np.inf else x)
         
-        df_cont[col] = Normalizer().fit_transform(df_cont[col].reshape(1,-1))[0]
+        df_cont[col] = Normalizer().fit_transform(df_cont[col].values.reshape(1,-1))[0]
 
 # Handle Missing Data for Categorical Data
 # If any column contains more than 50 entries of missing data, drop the column
