@@ -86,21 +86,21 @@ df_cont = df.drop(cats, axis=1)
 # Apply the sklearn.Normalizer to each column
 
 for col in df_cont.columns.values:
-    if np.sum(df_cont[col].isnull()) > 50:
+    if np.sum(df_cont[col].isnull()) > 0:
         df_cont = df_cont.drop(col, axis = 1)
-    elif np.sum(df_cont[col].isnull()) > 0:
-        median = df_cont[col].median()
-        idx = np.where(df_cont[col].isnull())[0]
-        df_cont[col].iloc[idx] = median
-
-        outliers = np.where(is_outlier(df_cont[col]))
-        df_cont[col].iloc[outliers] = median
+#    elif np.sum(df_cont[col].isnull()) > 0:
+#        median = df_cont[col].median()
+#        idx = np.where(df_cont[col].isnull())[0]
+#        df_cont[col].iloc[idx] = median
+#
+#        outliers = np.where(is_outlier(df_cont[col]))
+#        df_cont[col].iloc[outliers] = median
         
 #        if skew(df_cont[col]) > 0.75:
 #            	df_cont[col] = np.log(df_cont[col])
 #            	df_cont[col] = df_cont[col].apply(lambda x: 0 if x == -np.inf else x)
         
-        df_cont[col] = Normalizer().fit_transform(df_cont[col].values.reshape(1,-1))[0]
+#        df_cont[col] = Normalizer().fit_transform(df_cont[col].values.reshape(1,-1))[0]
 
 # Handle Missing Data for Categorical Data
 # If any column contains more than 50 entries of missing data, drop the column
@@ -253,19 +253,19 @@ df_cont = df.drop(cats, axis=1)
 for col in df_cont.columns.values:
     if np.sum(df_cont[col].isnull()) > 50:
         df_cont = df_cont.drop(col, axis = 1)
-    elif np.sum(df_cont[col].isnull()) > 0:
-        median = df_cont[col].median()
-        idx = np.where(df_cont[col].isnull())[0]
-        df_cont[col].iloc[idx] = median
-
-        outliers = np.where(is_outlier(df_cont[col]))
-        df_cont[col].iloc[outliers] = median
+#    elif np.sum(df_cont[col].isnull()) > 0:
+#        median = df_cont[col].median()
+#        idx = np.where(df_cont[col].isnull())[0]
+#        df_cont[col].iloc[idx] = median
+#
+#        outliers = np.where(is_outlier(df_cont[col]))
+#        df_cont[col].iloc[outliers] = median
         
 #        if skew(df_cont[col]) > 0.75:
 #            	df_cont[col] = np.log(df_cont[col])
 #            	df_cont[col] = df_cont[col].apply(lambda x: 0 if x == -np.inf else x)
         
-        df_cont[col] = Normalizer().fit_transform(df_cont[col].values.reshape(1,-1))[0]
+#        df_cont[col] = Normalizer().fit_transform(df_cont[col].values.reshape(1,-1))[0]
 
 # Handle Missing Data for Categorical Data
 # If any column contains more than 50 entries of missing data, drop the column
@@ -356,6 +356,9 @@ clf = RandomForestRegressor(n_estimators=500, n_jobs=-1)
 
 clf.fit(X_train1, y_train1)
 y_pred = clf.predict(X_test1)
+
+print "FINISHED"
+print y_pred
 
 #plt.figure(figsize=(10, 5))
 #plt.scatter(y_test1, y_pred, s=20)
