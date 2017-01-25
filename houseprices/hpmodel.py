@@ -142,6 +142,9 @@ clf = RandomForestRegressor(n_estimators=500, n_jobs=-1)
 
 clf.fit(X_train1, y_train1)
 
-y_pred = clf.predict(X_test1)
+y_pred = clf.predict(X_test)#1
 
 print y_pred
+print len(y_pred)
+
+# maybe add print.show() ?!
