@@ -4,6 +4,8 @@
 
 import pandas as pd
 import numpy as np
+import math
+import csv as csv
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
@@ -14,6 +16,7 @@ from sklearn.preprocessing import Imputer
 from scipy.stats import skew
 
 #import seaborn as sns
+#maybe add print.show() ?!
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -117,6 +120,7 @@ X_train = df_train[df_train.columns.values[1:-1]]
 y_train = df_train[df_train.columns.values[-1]]
 
 X_test = df_test[df_test.columns.values[1:]]
+X_test_helper = df_test[df_test.columns.values[:1]]
 
 #print "# Create RandomForest and train it"
 #from sklearn.metrics import make_scorer, mean_squared_error
@@ -142,9 +146,19 @@ clf = RandomForestRegressor(n_estimators=500, n_jobs=-1)
 
 clf.fit(X_train1, y_train1)
 
-y_pred = clf.predict(X_test)#1
+y_pred = clf.predict(X_test) # Predict Sales Price of test data
+
+for index in range(len(y_pred)):
+    y_pred[index] = math.exp(y_pred[index]) # Transform back because of skew handling
 
 print y_pred
 print len(y_pred)
 
-# maybe add print.show() ?!
+# Write predicted Sales Price to csv
+prediction_file = open("./submission_DWVK.csv", "wb")
+prediction_file_object = csv.writer(prediction_file)
+prediction_file_object.writerow(["Id", "SalePrice"])
+for index in range(len(y_pred)):
+        prediction_file_object.writerow( (X_test_helper.iat[index,0],y_pred[index]) )
+
+prediction_file.close()
