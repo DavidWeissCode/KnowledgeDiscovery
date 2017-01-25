@@ -4,6 +4,8 @@
 
 import pandas as pd
 import numpy as np
+import math
+import csv as csv
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
@@ -13,11 +15,8 @@ from sklearn.preprocessing import Imputer
 
 from scipy.stats import skew
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-# matplotlib inline
-
-plt.style.use('ggplot')
+#import seaborn as sns
+#maybe add print.show() ?!
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -29,7 +28,7 @@ df_train = pd.read_csv(train)
 df_test = pd.read_csv(test)
 
 # Define Median absolute deviation function
-def is_outlier(points, thresh = 3.5):
+def is_outlier(points, thresh = 3.5):# Error: "Divide by zero"
     if len(points.shape) == 1:
         points = points[:,None]
     median = np.median(points, axis=0)
@@ -45,29 +44,21 @@ def is_outlier(points, thresh = 3.5):
 target = df_train[df_train.columns.values[-1]]
 target_log = np.log(target)
 
-plt.figure(figsize=(10,5))
-plt.subplot(1,2,1)
-sns.distplot(target, bins=50)
-plt.title('Original Data')
-plt.xlabel('Sale Price')
-plt.subplot(1,2,2)
-sns.distplot(target_log, bins=50)
-plt.title('Natural Log of Data')
-plt.xlabel('Natural Log of Sale Price')
-plt.tight_layout()
+# sns.distplot(target, bins=50)
+# sns.distplot(target_log, bins=50)
 
 # Merge Train and Test to evaluate ranges and missing values
-df_train = df_train[df_train.columns.values[:-1]]
-df = df_train.append(df_test, ignore_index = True)
+df_train = df_train[df_train.columns.values[:-1]] # First time slicing "Sales Price" away
+df = df_train.append(df_test, ignore_index = True) # ".append" --> append rows
 
-# Find all categorical data
+# Find all categorical data --> afterwards cats[] contain the labelnames/columnnames
 cats = []
 for col in df.columns.values:
     if df[col].dtype == 'object':
-        cats.append(col)
+        cats.append(col) # ".append" --> append rows
 
 # Create separte datasets for Continuous vs Categorical
-df_cont = df.drop(cats, axis=1)
+df_cont = df.drop(cats, axis=1) # ".drop" --> "axis=1" refer to columns, default is rows: remove all columns specified by "cats"
 df_cat = df[cats]
 
 # Handle Missing Data for continuous data
@@ -117,10 +108,11 @@ for col in df_cat.columns.values:
 
 # Merge Numeric and Categorical Datasets and Create Training and Testing Data
 print "Merge Numeric and Categorical Datasets and Create Training and Testing Data"
-df_new = df_cont.join(df_cat)
+df_new = df_cont.join(df_cat) # ".join" --> join columns
 
-df_train = df_new.iloc[:len(df_train) - 1]
-df_train = df_train.join(target_log)
+# ".iloc[firstArg, secondArg]"" --> firstArg: rows, secondArg: columns
+df_train = df_new.iloc[:len(df_train) - 1] # select rows from 0 to lastIndex(exclusive) #train: 1461 lines, test: 1460 lines
+df_train = df_train.join(target_log) # ".join" --> join columns
 
 df_test = df_new.iloc[len(df_train) + 1:]
 
@@ -128,51 +120,45 @@ X_train = df_train[df_train.columns.values[1:-1]]
 y_train = df_train[df_train.columns.values[-1]]
 
 X_test = df_test[df_test.columns.values[1:]]
+X_test_helper = df_test[df_test.columns.values[:1]]
 
-# Create Estimator and Apply Cross Validation
-print "# Create Estimator and Apply Cross Validation"
-from sklearn.metrics import make_scorer, mean_squared_error
-scorer = make_scorer(mean_squared_error, False)
+#print "# Create RandomForest and train it"
+#from sklearn.metrics import make_scorer, mean_squared_error
+#scorer = make_scorer(mean_squared_error, False)
 
-clf = RandomForestRegressor(n_estimators=500, n_jobs=-1)
-cv_score = np.sqrt(-cross_val_score(estimator=clf, X=X_train, y=y_train, cv=15, scoring = scorer))
-
-plt.figure(figsize=(10,5))
-plt.bar(range(len(cv_score)), cv_score)
-plt.title('Cross Validation Score')
-plt.ylabel('RMSE')
-plt.xlabel('Iteration')
-plt.plot(range(len(cv_score) + 1), [cv_score.mean()] * (len(cv_score) + 1))
-plt.tight_layout()
+#clf = RandomForestRegressor(n_estimators=500, n_jobs=-1)
 
 # Evaluate Feature Significance
 # Fit model with training data
-clf.fit(X_train, y_train)
+#clf.fit(X_train, y_train)
 
 # Output feature importance coefficients, map them to their feature name, and sort values
-coef = pd.Series(clf.feature_importances_, index = X_train.columns).sort_values(ascending=False)
+#coef = pd.Series(clf.feature_importances_, index = X_train.columns).sort_values(ascending=False)
 
-plt.figure(figsize=(10, 5))
-coef.head(25).plot(kind='bar')
-plt.title('Feature Significance')
-plt.tight_layout()
+#coef.head(25).plot(kind='bar')
 
-# Visualize Predicted vs. Actual Sales Price
-print "# Visualize Predicted vs. Actual Sales Price"
+print "Create RandomForest, Train RandomForest, Predict test data"
 from sklearn.cross_validation import train_test_split
 
 X_train1, X_test1, y_train1, y_test1 = train_test_split(X_train, y_train)
+
 clf = RandomForestRegressor(n_estimators=500, n_jobs=-1)
 
 clf.fit(X_train1, y_train1)
-y_pred = clf.predict(X_test1)
+
+y_pred = clf.predict(X_test) # Predict Sales Price of test data
+
+for index in range(len(y_pred)):
+    y_pred[index] = math.exp(y_pred[index]) # Transform back because of skew handling
 
 print y_pred
+print len(y_pred)
 
-plt.figure(figsize=(10, 5))
-plt.scatter(y_test1, y_pred, s=20)
-plt.title('Predicted vs. Actual')
-plt.xlabel('Actual Sale Price')
-plt.ylabel('Predicted Sale Price')
-plt.plot([min(y_test1), max(y_test1)], [min(y_test1), max(y_test1)])
-plt.tight_layout()
+# Write predicted Sales Price to csv
+prediction_file = open("./submission_DWVK.csv", "wb")
+prediction_file_object = csv.writer(prediction_file)
+prediction_file_object.writerow(["Id", "SalePrice"])
+for index in range(len(y_pred)):
+        prediction_file_object.writerow( (X_test_helper.iat[index,0],y_pred[index]) )
+
+prediction_file.close()
