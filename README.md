@@ -1,3 +1,7 @@
-KnowledgeDiscovery
+# KnowledgeDiscovery
+Various machine learning and data analytics code
 
-1.) A tiny neural network
+<ul>
+<li>Houseprice regression</li>
+<li>Neural network using backpropagation</li>
+</ul>
